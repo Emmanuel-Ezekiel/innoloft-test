@@ -1,32 +1,81 @@
 import React, { useEffect, useRef, ReactElement } from "react";
-import { useAppSelector } from "../../hooks/hooks";
+import { useAppSelector, useAppDispatch, } from "../../hooks/hooks";
 import { Link } from "react-router-dom";
-import { RichTextEditor } from "@mantine/tiptap";
-import { useEditor } from "@tiptap/react";
-// import Highlight from "@tiptap/extension-highlight";
-import StarterKit from "@tiptap/starter-kit";
-// import Underline from "@tiptap/extension-underline";
-// import TextAlign from "@tiptap/extension-text-align";
-// import Superscript from "@tiptap/extension-superscript";
-// import SubScript from "@tiptap/extension-subscript";
+import axios from "axios";
+import { getTrl } from "../../api/Api";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+import { setBody,  setSelectedTRL } from "../../features/editSlice/editSlice";
+
 
 const Index = () => {
   const { getProduct }: any = useAppSelector((state) => state.product);
+  const { trlUrl, updateUrl, id, body, selectedTRL, configData}: any = useAppSelector((state) => state.edit);
+  const dispatch = useAppDispatch();
 
-  const content = '<h2 style={textAlign: "center"}></h2>';
+  // const [selectedTRL, setSelectedTRL] = React.useState<any>();
+  const [editorContent, setEditorContent] = React.useState("");
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      // Underline,
-      // Link,
-      // Superscript,
-      // SubScript,
-      // Highlight,
-      // TextAlign.configure({ types: ["heading", "paragraph"] }),
-    ],
-    content,
-  });
+
+
+  console.log("con",  configData);
+
+  // updateProduct
+  const updateProduct = async () => {
+    const {data} = await axios.put(`${updateUrl}/${id}`);
+    return data;
+  }
+
+  const submit = (event: any) => {
+    event.preventDefault();
+    updateProduct();
+  }
+
+  // React.useEffect(() => {
+  //   getTrl(trlUrl).then((response: any) => {
+  //     console.log("rest", response);
+  //     setSelectedTRL(response);
+  //   });
+  // }, [trlUrl]);
+
+
+  //generate Text
+  const generateText = (selectedTRLItem: any) => {
+    if (selectedTRLItem) {
+      const code = `<p>${selectedTRLItem.name}</p>`;
+      setEditorContent(code);
+    } else {
+      setEditorContent("");
+    }
+  };
+
+  //select Trl
+  const handleSelect = (event: any) => {
+    event.preventDefault();
+    const selectedOption = event.target.value;
+    if (selectedOption) {
+      const selectedTRLId = parseInt(selectedOption);
+      const selectedTRLItem = selectedTRL?.find(
+        (item: any) => item.id === selectedTRLId.toString()
+      );
+      setSelectedTRL((prevState: any) => [...prevState, selectedTRLItem]);
+      // dispatch(setBody(selectedTRLItem));
+      generateText(selectedTRLItem);
+      updateProduct();
+    }
+  };
+
+
+  //clear Text Editor
+  const clear = () => {
+    setEditorContent("");
+  }
+
+  //change Text Editor
+  const handleEditorChange = (value: any) => {
+    setEditorContent(value);
+    dispatch(setBody(value));
+  };
 
   return (
     <div className="w-[1130px] h-[1364px] md:w-full">
@@ -46,7 +95,7 @@ const Index = () => {
         </Link>
       </header>
 
-      <section className="w-full h-[520px] md:h-auto mt-[20px] rounded-md border-[#E5E7EB] bg-[#FFFFFF] relative border flex md:flex-col items-center justify-center md:justify-start">
+      <section className="w-full h-[629px] md:h-auto mt-[20px] rounded-md border-[#E5E7EB] bg-[#FFFFFF] relative border flex md:flex-col items-center justify-center md:justify-start">
         <div className="absolute top-0 left-0 w-[120px] h-[40px] border-t border-l border-[#E5E7EB] rounded-md flex ">
           <div className="w-[40px] h-[40px] border-t border-r-0 border-b-0 border-l border-[#E5E7EB] rounded-md flex bg-[#272E71] items-center justify-center">
             <img src="/icon-rib.svg" alt="" />
@@ -64,75 +113,23 @@ const Index = () => {
           />
 
           <div className="w-[706px] h-[247px] m-[20px] flex flex-col gap-[10px] items-start md:w-full md:h-336px md:m-[0px]">
-            <h2 className="text-[#374151] font-semibold text-base ">
+            <h2 className="text-[#374151] font-semibold text-base border w-full flex items-start border-[#D1D5DB]">
               {getProduct?.name}
             </h2>
-
-            <textarea name="" id="" cols={30} rows={10} className='w-[706px] h-[203px] border'>
-
-            </textarea>
-
-            <div className="w-[740px] h-[60px] flex items-center justify-end border pr-[30px]">
-              <button className="w-[44px] h-[30px]">
-                Clear
-              </button>
-              <button className="w-[72px] h-[30px] bg-[rgba(39, 46, 113, 0.5)]">
-                Save
+            <div className="w-full">
+              <ReactQuill value={editorContent} onChange={handleEditorChange} className="h-[100px]"/>
+            </div>
+            <div className="w-[740px] h-[60px] flex items-center justify-end pr-[30px] gap-[5px] md:w-full mt-[30px]">
+              <button className="w-[44px] h-[30px]" onClick={clear}>Clear</button>
+              <button className="w-[72px] h-[30px] bg-[#272E7180] border rounded-md flex text-center justify-center p-[5px] gap-[3px]" onClick={submit}>
+                <img src="/icon-mark.svg" alt="" /> Save
               </button>
             </div>
 
-            {/* <RichTextEditor editor={editor}>
-              <RichTextEditor.Toolbar sticky stickyOffset={20}>
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.Bold />
-                  <RichTextEditor.Italic />
-                  <RichTextEditor.Underline />
-                  <RichTextEditor.Strikethrough />
-                  <RichTextEditor.ClearFormatting />
-                  <RichTextEditor.Highlight />
-                  <RichTextEditor.Code />
-                </RichTextEditor.ControlsGroup>
-
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.H1 />
-                  <RichTextEditor.H2 />
-                  <RichTextEditor.H3 />
-                  <RichTextEditor.H4 />
-                </RichTextEditor.ControlsGroup>
-
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.Blockquote />
-                  <RichTextEditor.Hr />
-                  <RichTextEditor.BulletList />
-                  <RichTextEditor.OrderedList />
-                  <RichTextEditor.Subscript />
-                  <RichTextEditor.Superscript />
-                </RichTextEditor.ControlsGroup>
-
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.Link />
-                  <RichTextEditor.Unlink />
-                </RichTextEditor.ControlsGroup>
-
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.AlignLeft />
-                  <RichTextEditor.AlignCenter />
-                  <RichTextEditor.AlignJustify />
-                  <RichTextEditor.AlignRight />
-                </RichTextEditor.ControlsGroup>
-              </RichTextEditor.Toolbar>
-
-              <RichTextEditor.Content />
-            </RichTextEditor> */}
-
             {/* <textarea name="" id="" cols={30} rows={10}></textarea> */}
-            <p className="text-[#6B7280] font-normal text-sm w-full h-[144px] text-left text-ellipsis overflow-auto"></p>
-
           </div>
-
-          
         </div>
-        <div className="w-[382px] h-[518px] border border-[#E5E7EB] md:h-[305.19px] md:w-full md:mt-[350px]">
+        <div className="w-[382px] h-full border border-[#E5E7EB] md:h-[305.19px] md:w-full md:mt-[350px]">
           <div className="w-[342px] h-[230.31px]  mx-[21px] mt-[21px] flex flex-col gap-[10px] md:mx-[0px]">
             <h1 className="w-full h-[24px] flex items-start font-semibold text-[16px]">
               Offered By
@@ -194,15 +191,24 @@ const Index = () => {
           />
         </div>
       </section>
-      <section className="w-full h-[108px] my-[20px] rounded-md border-[#E5E7EB] bg-[#FFFFFF] border flex items-start flex-col md:w-full">
+      <section className="w-full h-[290px] my-[20px] rounded-md border-[#E5E7EB] bg-[#FFFFFF] border flex items-start flex-col md:w-full">
         <div className="w-[1090px] h-[180px] m-[20px] rounded-md border-[#E5E7EB] bg-[#FFFFFF]  flex items-start flex-col md:w-full  md:m-[20]">
           <h1 className='font-semibold text-[16px] font-["Open_Sans"] text-[#374151]'>
             Offer details
           </h1>
 
-          <p className="text-[#BF1C26] text-[16px] font-semibold my-[20px]">
-            This is up to you :)
-          </p>
+          <h2> TRL level</h2>
+          <select
+            onChange={handleSelect}
+            className="mt-[20px] border cursor-pointer"
+          >
+            <option value="">Select TRL level</option>
+            {selectedTRL?.map((item: any) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
         </div>
       </section>
     </div>

@@ -135,6 +135,7 @@ const Index = () => {
             </div>
           </div>
           <div className="w-[342px] h-[200px] mx-[21px]  md:mx-[0px]">
+            <img src="/map.svg" alt="" />
             <Wrapper
               apiKey="AIzaSyB9Nlw59xbL7MbottHTj0R7yS4v6Ut3aa0"
               render={render}

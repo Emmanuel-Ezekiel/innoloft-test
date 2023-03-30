@@ -1,6 +1,7 @@
 import React from "react";
 import { useAppSelector } from "../../hooks/hooks";
 
+
 const Nav = () => {
   const { getProduct }: any = useAppSelector((state) => state.product);
 
